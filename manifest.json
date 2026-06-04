@@ -1,0 +1,22 @@
+{
+  "name": "FlexGrabber",
+  "short_name": "FlexGrabber",
+  "description": "Amazon Flex instant offer bot",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1200",
+  "theme_color": "#FF9900",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/FF9900/1a1200?text=FG",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/FF9900/1a1200?text=FG",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
