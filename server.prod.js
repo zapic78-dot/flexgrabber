@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use(express.static(path.join(__dirname, '.')));
 
 // ─── In-memory state ───────────────────────────────────────────
 let botState = { running: false, grabbed: 0, earned: 0, checked: 0, log: [], offers: [] };
