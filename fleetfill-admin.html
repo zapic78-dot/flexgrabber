@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FleetFill Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+  .container { max-width: 600px; margin: 0 auto; }
+  .header { text-align: center; padding: 30px 0 24px; }
+  .header h1 { font-size: 24px; font-weight: 700; color: #fff; }
+  .header p { font-size: 13px; color: #64748b; margin-top: 6px; }
+  .logo { font-size: 40px; margin-bottom: 10px; }
+
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; font-weight: 650; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
+
+  label { display: block; font-size: 12.5px; color: #94a3b8; margin-bottom: 5px; margin-top: 10px; }
+  label:first-of-type { margin-top: 0; }
+  input { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #e2e8f0; font-size: 13px; font-family: inherit; }
+  input:focus { outline: none; border-color: #ea580c; }
+  input::placeholder { color: #475569; }
+
+  .btn { display: block; width: 100%; padding: 11px; border: 0; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 14px; transition: background .15s; }
+  .btn-orange { background: #ea580c; color: #fff; }
+  .btn-orange:hover { background: #c2410c; }
+  .btn-red { background: #dc2626; color: #fff; }
+  .btn-red:hover { background: #b91c1c; }
+  .btn-green { background: #16a34a; color: #fff; }
+  .btn-green:hover { background: #15803d; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .status { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; display: none; }
+  .status.show { display: block; }
+  .status.ok  { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .status.err { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+  .status.info{ background: #1c1400; color: #fbbf24; border: 1px solid #78350f; }
+
+  .secret-row { display: flex; gap: 8px; align-items: flex-end; }
+  .secret-row input { flex: 1; }
+  .secret-row .btn { width: auto; padding: 10px 14px; margin-top: 0; font-size: 12px; }
+
+  .key-result { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-top: 12px; display: none; }
+  .key-result.show { display: block; }
+  .key-result-label { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+  .key-result-value { font-size: 15px; font-weight: 700; color: #ea580c; letter-spacing: 1px; font-family: monospace; word-break: break-all; }
+  .copy-btn { margin-top: 8px; padding: 6px 12px; background: #334155; border: 0; border-radius: 6px; color: #e2e8f0; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .copy-btn:hover { background: #475569; }
+
+  .divider { border: 0; border-top: 1px solid #1e293b; margin: 4px 0 10px; }
+  .footer { text-align: center; font-size: 11px; color: #334155; margin-top: 24px; padding-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">⚡</div>
+    <h1>FleetFill Admin Panel</h1>
+    <p>Manage license keys — only you have access to this file</p>
+  </div>
+
+  <!-- Admin Secret -->
+  <div class="card">
+    <h2>🔐 Your Admin Password</h2>
+    <p style="font-size:12.5px;color:#64748b;margin-bottom:12px">Enter your admin secret first. Required for all actions below.</p>
+    <label>Admin Secret</label>
+    <div class="secret-row">
+      <input type="password" id="admin-secret" placeholder="ZapicAdmin2025!" />
+      <button class="btn btn-orange" onclick="saveSecret()" style="white-space:nowrap">Save</button>
+    </div>
+    <div class="status" id="secret-status"></div>
+  </div>
+
+  <!-- Add Key -->
+  <div class="card">
+    <h2>✅ Add New License Key</h2>
+    <label>Customer Name</label>
+    <input type="text" id="add-name" placeholder="e.g. John Smith or ABC Trucking" />
+    <label>License Key <span style="color:#64748b;font-size:11px">(leave blank to auto-generate)</span></label>
+    <input type="text" id="add-key" placeholder="Auto-generate or type your own key" />
+    <button class="btn btn-green" onclick="addKey()">➕ Generate & Activate Key</button>
+    <div class="key-result" id="key-result">
+      <div class="key-result-label">License key for this customer:</div>
+      <div class="key-result-value" id="key-result-value"></div>
+      <button class="copy-btn" onclick="copyKey()">📋 Copy Key</button>
+    </div>
+    <div class="status" id="add-status"></div>
+  </div>
+
+  <!-- Revoke Key -->
+  <div class="card">
+    <h2>🚫 Revoke a Key</h2>
+    <p style="font-size:12.5px;color:#64748b;margin-bottom:12px">Revoking a key instantly stops that person from using FleetFill — even if they already have it installed.</p>
+    <label>License Key to Revoke</label>
+    <input type="text" id="revoke-key" placeholder="Paste the key to revoke" />
+    <button class="btn btn-red" onclick="revokeKey()">🚫 Revoke This Key</button>
+    <div class="status" id="revoke-status"></div>
+  </div>
+
+  <!-- Check Key -->
+  <div class="card">
+    <h2>🔍 Check a Key</h2>
+    <label>License Key to Check</label>
+    <input type="text" id="check-key" placeholder="Paste any key to check its status" />
+    <button class="btn btn-orange" onclick="checkKey()">🔍 Check Status</button>
+    <div class="status" id="check-status"></div>
+  </div>
+
+  <div class="footer">FleetFill AI v5.0 · Admin Panel · zapic78@gmail.com</div>
+</div>
+
+<script>
+  const WORKER = 'https://fleetfill-keys.zapic78.workers.dev';
+  let adminSecret = '';
+
+  function saveSecret() {
+    adminSecret = document.getElementById('admin-secret').value.trim();
+    if (!adminSecret) return showStatus('secret-status', '❌ Enter your admin secret first.', 'err');
+    showStatus('secret-status', '✅ Secret saved for this session.', 'ok');
+  }
+
+  function generateKey() {
+    // Generate a readable key like FF-XXXX-XXXX-XXXX
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const seg = () => Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    return `FF-${seg()}-${seg()}-${seg()}`;
+  }
+
+  async function addKey() {
+    if (!checkSecret()) return;
+    const name = document.getElementById('add-name').value.trim();
+    if (!name) return showStatus('add-status', '❌ Enter the customer name.', 'err');
+    const key = document.getElementById('add-key').value.trim() || generateKey();
+
+    showStatus('add-status', '⏳ Adding key…', 'info');
+    try {
+      const resp = await fetch(WORKER + '/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: adminSecret, key, name }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        document.getElementById('key-result-value').textContent = key;
+        document.getElementById('key-result').classList.add('show');
+        document.getElementById('add-key').value = '';
+        document.getElementById('add-name').value = '';
+        showStatus('add-status', `✅ Key activated for ${name}. Share the key above with them.`, 'ok');
+      } else {
+        showStatus('add-status', '❌ ' + (data.error || 'Failed to add key.'), 'err');
+      }
+    } catch(e) {
+      showStatus('add-status', '❌ Could not reach server: ' + e.message, 'err');
+    }
+  }
+
+  async function revokeKey() {
+    if (!checkSecret()) return;
+    const key = document.getElementById('revoke-key').value.trim();
+    if (!key) return showStatus('revoke-status', '❌ Paste the key to revoke.', 'err');
+    if (!confirm(`Revoke key "${key}"? This will instantly stop that person from using FleetFill.`)) return;
+
+    showStatus('revoke-status', '⏳ Revoking…', 'info');
+    try {
+      const resp = await fetch(WORKER + '/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: adminSecret, key }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        document.getElementById('revoke-key').value = '';
+        showStatus('revoke-status', `✅ Key revoked. That person can no longer use FleetFill.`, 'ok');
+      } else {
+        showStatus('revoke-status', '❌ ' + (data.error || 'Failed to revoke.'), 'err');
+      }
+    } catch(e) {
+      showStatus('revoke-status', '❌ Could not reach server: ' + e.message, 'err');
+    }
+  }
+
+  async function checkKey() {
+    const key = document.getElementById('check-key').value.trim();
+    if (!key) return showStatus('check-status', '❌ Enter a key to check.', 'err');
+
+    showStatus('check-status', '⏳ Checking…', 'info');
+    try {
+      const resp = await fetch(WORKER + '/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      });
+      const data = await resp.json();
+      if (data.active) {
+        showStatus('check-status', `✅ ACTIVE — Registered to: ${data.name || 'Unknown'}`, 'ok');
+      } else {
+        showStatus('check-status', `🚫 INACTIVE — ${data.reason || 'Invalid or revoked key'}`, 'err');
+      }
+    } catch(e) {
+      showStatus('check-status', '❌ Could not reach server: ' + e.message, 'err');
+    }
+  }
+
+  function copyKey() {
+    const key = document.getElementById('key-result-value').textContent;
+    navigator.clipboard.writeText(key).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy Key', 2000);
+    });
+  }
+
+  function checkSecret() {
+    if (!adminSecret) {
+      alert('Enter your Admin Secret at the top first and click Save.');
+      return false;
+    }
+    return true;
+  }
+
+  function showStatus(id, msg, kind) {
+    const el = document.getElementById(id);
+    el.className = 'status show ' + kind;
+    el.textContent = msg;
+  }
+</script>
+</body>
+</html>
